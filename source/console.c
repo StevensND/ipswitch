@@ -123,31 +123,88 @@ void selectIndex(int* selection, StrList* str_list, int change) {
     printf(menu_buffer);
 }
 
-u64 selectFromList(int* selection, StrList* str_list) {
+u64 selectFromList(int* selection, StrList* str_list, PadState* pad) {
     if(str_list->size <= 0) {
-        if(userConfirm("Error: list is empty"))
+        if(userConfirm("Error: list is empty", pad))
             return 0;
         else
-            return KEY_PLUS;
+            return HidNpadButton_Plus;
     }
 
     selectIndex(selection, str_list, 0);
 
-    u64 kDownPrevious = 0xFFFFFFFFFFFFFFFF;
+    static u64 stick_cooldown = 0;
+    
     while(appletMainLoop()) {
-        hidScanInput();
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
-        kDown = kDown&(0xFFFFFFFFFFFFFFFF-KEY_TOUCH); // "can't touch this"
-
-        if (kDown & KEY_UP)
+        padUpdate(pad);
+        u64 kDown = padGetButtonsDown(pad);
+        
+        // Get analog stick positions
+        HidAnalogStickState analog_stick_l = padGetStickPos(pad, 0);
+        HidAnalogStickState analog_stick_r = padGetStickPos(pad, 1);
+        
+        bool direction_pressed = false;
+        
+        // Handle directional buttons first
+        if (kDown & HidNpadButton_Up) {
             selectIndex(selection, str_list, -1);
-        else if (kDown & KEY_DOWN)
+            stick_cooldown = 15;
+            direction_pressed = true;
+        }
+        else if (kDown & HidNpadButton_Down) {
             selectIndex(selection, str_list, 1);
-        else if (kDown & KEY_LEFT)
+            stick_cooldown = 15;
+            direction_pressed = true;
+        }
+        else if (kDown & HidNpadButton_Left) {
             selectIndex(selection, str_list, -5);
-        else if (kDown & KEY_RIGHT)
+            stick_cooldown = 15;
+            direction_pressed = true;
+        }
+        else if (kDown & HidNpadButton_Right) {
             selectIndex(selection, str_list, 5);
-        else if (kDown & KEY_A) {
+            stick_cooldown = 15;
+            direction_pressed = true;
+        }
+        // Check analog sticks only if cooldown expired and no button was pressed
+        else if (stick_cooldown == 0) {
+            const s32 STICK_THRESHOLD = 25000;
+            
+            if (analog_stick_l.y > STICK_THRESHOLD || analog_stick_r.y > STICK_THRESHOLD) {
+                selectIndex(selection, str_list, -1);
+                stick_cooldown = 15;
+                direction_pressed = true;
+            }
+            else if (analog_stick_l.y < -STICK_THRESHOLD || analog_stick_r.y < -STICK_THRESHOLD) {
+                selectIndex(selection, str_list, 1);
+                stick_cooldown = 15;
+                direction_pressed = true;
+            }
+            else if (analog_stick_l.x < -STICK_THRESHOLD || analog_stick_r.x < -STICK_THRESHOLD) {
+                selectIndex(selection, str_list, -5);
+                stick_cooldown = 15;
+                direction_pressed = true;
+            }
+            else if (analog_stick_l.x > STICK_THRESHOLD || analog_stick_r.x > STICK_THRESHOLD) {
+                selectIndex(selection, str_list, 5);
+                stick_cooldown = 15;
+                direction_pressed = true;
+            }
+        }
+        
+        // Decrease cooldown
+        if (stick_cooldown > 0) {
+            stick_cooldown--;
+        }
+        
+        // If we moved with direction, skip checking action buttons
+        if (direction_pressed) {
+            consoleUpdate(NULL);
+            continue;
+        }
+        
+        // Now check action buttons
+        if (kDown & HidNpadButton_A) {
             char* cur_str = str_list->str_list[*selection];
             u16 str_tail = getStringTailU16(cur_str);
             if(str_tail == TOGGLE_ENABLED) {
@@ -161,28 +218,44 @@ u64 selectFromList(int* selection, StrList* str_list) {
                 return kDown;
             }
         }
-        else if(kDown > kDownPrevious) {
+        else if(kDown & HidNpadButton_B) {
             printf("\n");
             return kDown;
         }
-        kDownPrevious = kDown;
+        else if(kDown & HidNpadButton_Plus) {
+            printf("\n");
+            return kDown;
+        }
+        else if(kDown & HidNpadButton_Minus) {
+            printf("\n");
+            return kDown;
+        }
+        else if(kDown & HidNpadButton_X) {
+            printf("\n");
+            return kDown;
+        }
+        else if(kDown & HidNpadButton_Y) {
+            printf("\n");
+            return kDown;
+        }
+        
         consoleUpdate(NULL);
     }
 
     return 0;
 }
 
-bool userConfirm(const char * msg) {
+bool userConfirm(const char * msg, PadState* pad) {
     printf("\n%s\nPress A to confirm, any other button to cancel\n", msg);
 
-    u64 kDownPrevious = hidKeysDown(CONTROLLER_P1_AUTO);
+    u64 kDownPrevious = padGetButtonsDown(pad);
     while(appletMainLoop())
     {
-        hidScanInput();
-        u64 kDown = hidKeysDown(CONTROLLER_P1_AUTO);
+        padUpdate(pad);
+        u64 kDown = padGetButtonsDown(pad);
 
         if(kDown > kDownPrevious) {
-            if (kDown & KEY_A)
+            if (kDown & HidNpadButton_A)
                 return true;
             else {
                 printf("Canceled\n");

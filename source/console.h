@@ -20,9 +20,9 @@
 
 u16 getStringTailU16(char* str);
 
-u64 selectFromList(int* selection, StrList* str_list);
+u64 selectFromList(int* selection, StrList* str_list, PadState* pad);
 
-bool userConfirm(const char* msg);
+bool userConfirm(const char* msg, PadState* pad);
 
 void printInProgress(const char* msg);
 void printDone();
