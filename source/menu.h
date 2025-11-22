@@ -13,12 +13,12 @@
 
 #define IPSWITCH_DIR "/switch/ipswitch/"
 
-u64 patchTextSelect();
+u64 patchTextSelect(PatchTextTarget* pchtxt_target, PadState* pad);
 
-void mainMenu();
+void mainMenu(PadState* pad);
 
-u64 patchTextToIPSMenu();
+u64 patchTextToIPSMenu(PadState* pad);
 
-u64 patchTextToggleMenu();
+u64 patchTextToggleMenu(PadState* pad);
 
 #endif

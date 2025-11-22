@@ -31,18 +31,13 @@ include $(DEVKITPRO)/libnx/switch_rules
 #     - <libnx folder>/default_icon.jpg
 #---------------------------------------------------------------------------------
 
-GITREV  := $(shell git rev-parse HEAD && rm -f $(notdir $(CURDIR)).nacp)
-
 VERSION_MAJOR := 0
 VERSION_MINOR := 2
-VERSION_MICRO := 1
-ifneq ($(GITREV),)
-VERSION_MICRO := $(VERSION_MICRO)-$(GITREV)
-endif
+VERSION_MICRO := 3
 
 APP_TITLE	:=	IPSwitch
 APP_AUTHOR	:=	3096
-APP_VERSION	:=	w${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}
+APP_VERSION	:=	${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_MICRO}
 
 TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build

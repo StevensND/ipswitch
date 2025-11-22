@@ -7,6 +7,6 @@
 #define LINE_MAX_SIZE 0x1000
 
 // Return 0 if all checks passed
-int checkRequirement();
+int checkRequirement(PadState* pad);
 
 #endif
